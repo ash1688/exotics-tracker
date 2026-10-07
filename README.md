@@ -2,6 +2,9 @@
 
 Tick off the Division 2 exotics you own. Data comes from [Tuxedo Bandido](https://www.youtube.com/@TuxedoBandido)'s Division 2 exotics spreadsheet (`src/exotics.json`). All credit for the data goes to him. Check out his channel for Division 2 guides.
 
+- View the spreadsheet: https://ggl.link/TuxExotics (to tick the Got column, use File → Make a copy to save it to your own Drive)
+- Download it (xlsx): https://ggl.link/TuxExoticsDownload
+
 ```bash
 npm install
 npm start

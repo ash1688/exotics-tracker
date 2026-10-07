@@ -121,7 +121,9 @@ app.innerHTML = `
   <dialog id="sync-dialog" class="modal sync-dialog"></dialog>
   <dialog id="info-dialog" class="modal info-dialog" aria-labelledby="info-title"></dialog>
 
-  <footer>Data from <a href="https://www.youtube.com/@TuxedoBandido" target="_blank" rel="noopener">Tuxedo Bandido</a>'s Division 2 Exotics sheet · ${BROWSER_ONLY ? "Progress saved in this browser" : "Progress saved to <code>data/owned.json</code>"}</footer>
+  <footer>Data from <a href="https://www.youtube.com/@TuxedoBandido" target="_blank" rel="noopener">Tuxedo Bandido</a>'s Division 2 Exotics sheet
+    (<a href="https://ggl.link/TuxExotics" target="_blank" rel="noopener">Google Sheet</a> ·
+    <a href="https://ggl.link/TuxExoticsDownload" target="_blank" rel="noopener">download .xlsx</a>) · ${BROWSER_ONLY ? "Progress saved in this browser" : "Progress saved to <code>data/owned.json</code>"}</footer>
 `;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;

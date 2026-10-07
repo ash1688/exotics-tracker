@@ -29,7 +29,7 @@ interface Filters {
   showUpcoming: boolean;
 }
 
-const filters: Filters = {
+const DEFAULT_FILTERS: Filters = {
   search: "",
   ownership: "all",
   category: "all",
@@ -38,6 +38,7 @@ const filters: Filters = {
   sort: "num",
   showUpcoming: true,
 };
+const filters: Filters = { ...DEFAULT_FILTERS };
 let owned = new Set<number>();
 
 const isLive = (e: Exotic) => e.status === "Live";
@@ -100,7 +101,12 @@ app.innerHTML = `
   </section>
 
   <div class="results-bar">
-    <span id="count"></span>
+    <span class="count-wrap">
+      <span id="count"></span>
+      <button id="clear-filters" class="clear-filters" hidden>
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg> Clear filters
+      </button>
+    </span>
     <span class="actions">
       <span id="save-state" class="save-state"></span>
       <button id="sync" class="link">Sync</button>
@@ -122,6 +128,11 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const listEl = $("list");
 const statsEl = $("stats");
 const countEl = $("count");
+const clearFiltersBtn = $<HTMLButtonElement>("clear-filters");
+
+/** True when anything (other than sort order) narrows the list. */
+const isFiltered = () =>
+  (Object.keys(DEFAULT_FILTERS) as (keyof Filters)[]).some((k) => k !== "sort" && filters[k] !== DEFAULT_FILTERS[k]);
 const saveStateEl = $("save-state");
 const subtypesEl = $("subtypes");
 
@@ -276,6 +287,7 @@ infoDialog.addEventListener("click", () => {
 function renderList() {
   const list = sorted(exotics.filter(matches));
   countEl.textContent = `Showing ${list.length} of ${exotics.length}`;
+  clearFiltersBtn.hidden = !isFiltered();
   listEl.innerHTML = list.length
     ? list.map(card).join("")
     : `<div class="empty">No exotics match these filters.${filters.ownership === "need" ? " Maybe you've got them all? 🎉" : ""}</div>`;
@@ -353,6 +365,17 @@ $<HTMLSelectElement>("sort").addEventListener("change", (ev) => {
   filters.sort = (ev.target as HTMLSelectElement).value as SortKey;
   renderList();
 });
+clearFiltersBtn.addEventListener("click", () => {
+  Object.assign(filters, DEFAULT_FILTERS, { sort: filters.sort });
+  $<HTMLInputElement>("search").value = "";
+  $<HTMLSelectElement>("role").value = "all";
+  $<HTMLInputElement>("upcoming").checked = true;
+  for (const id of ["ownership", "category"]) {
+    $(id).querySelectorAll<HTMLElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.v === "all"));
+  }
+  render();
+});
+
 $<HTMLInputElement>("upcoming").addEventListener("change", (ev) => {
   filters.showUpcoming = (ev.target as HTMLInputElement).checked;
   render();

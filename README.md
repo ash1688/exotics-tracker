@@ -9,6 +9,10 @@ npm start
 
 Opens http://localhost:5199. Progress is saved to `data/owned.json`, so it survives restarts and browser changes. A copy is also kept in browser storage in case the server can't be reached. Use **Export** / **Import** to back it up.
 
+## Online version
+
+The app is published to GitHub Pages at https://ash1688.github.io/exotics-tracker/ on every push to `main` (`.github/workflows/pages.yml`). There's no server there, so progress is saved in your browser only. Use **Export** / **Import** to move it between devices or into the local version.
+
 ## Images
 
 Item images are downloaded from [The Division wiki](https://thedivision.fandom.com) into `public/images`, with the mapping in `src/images.json`. To fetch any that are missing (for example after adding new exotics to `src/exotics.json`), run:

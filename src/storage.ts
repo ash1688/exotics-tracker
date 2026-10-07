@@ -1,5 +1,8 @@
 const CACHE_KEY = "exotics-tracker:owned";
 
+/** Static builds (GitHub Pages) have no API server, so progress lives in browser storage only. */
+export const BROWSER_ONLY = import.meta.env.VITE_STORAGE === "browser";
+
 function readCache(): number[] {
   try {
     const v = JSON.parse(localStorage.getItem(CACHE_KEY) ?? "[]");
@@ -19,6 +22,7 @@ function writeCache(owned: number[]): void {
 
 /** Loads owned exotic numbers from data/owned.json (via the local API), falling back to the browser cache. */
 export async function loadOwned(): Promise<{ owned: Set<number>; offline: boolean }> {
+  if (BROWSER_ONLY) return { owned: new Set(readCache()), offline: false };
   try {
     const res = await fetch("/api/owned");
     if (!res.ok) throw new Error(res.statusText);
@@ -36,6 +40,7 @@ let pending: ReturnType<typeof setTimeout> | undefined;
 export function saveOwned(owned: Set<number>, onResult: (ok: boolean) => void): void {
   const list = [...owned];
   writeCache(list);
+  if (BROWSER_ONLY) return onResult(true);
   clearTimeout(pending);
   pending = setTimeout(async () => {
     try {

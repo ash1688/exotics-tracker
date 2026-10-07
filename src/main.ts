@@ -2,10 +2,13 @@ import "./styles.css";
 import data from "./exotics.json";
 import images from "./images.json";
 import type { Exotic, ExoticsFile } from "./types";
-import { loadOwned, saveOwned } from "./storage";
+import { BROWSER_ONLY, loadOwned, saveOwned } from "./storage";
 
 const { meta, exotics } = data as ExoticsFile;
-const imageFor = (e: Exotic) => (images as Record<string, string>)[e.num];
+const imageFor = (e: Exotic) => {
+  const src = (images as Record<string, string>)[e.num];
+  return src && import.meta.env.BASE_URL + src.replace(/^\//, "");
+};
 
 // In-game order for the subtype chips.
 const SUBTYPES: Record<Exotic["category"], string[]> = {
@@ -102,7 +105,7 @@ app.innerHTML = `
   </div>
 
   <main id="list" class="grid"></main>
-  <footer>Data from Tuxedo Bandido's Division 2 Exotics sheet · Progress saved to <code>data/owned.json</code></footer>
+  <footer>Data from Tuxedo Bandido's Division 2 Exotics sheet · ${BROWSER_ONLY ? "Progress saved in this browser" : "Progress saved to <code>data/owned.json</code>"}</footer>
 `;
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;

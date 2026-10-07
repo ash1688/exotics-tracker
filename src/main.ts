@@ -331,13 +331,18 @@ function renderPlan() {
   const got = TUX_PLAN.firstSix.filter((p) => owned.has(p.num)).length;
   $("plan-progress").textContent = `${got}/${TUX_PLAN.firstSix.length} of his top picks`;
   $("plan-body").innerHTML = `
-    <div class="plan-col">
+    <div class="plan-col plan-picks">
       <h3>Chase these first <a href="${TUX_PLAN.picksVideo}" target="_blank" rel="noopener">▶ 15:21</a></h3>
       <p class="plan-note">His picks for a fresh agent, chosen for how much they change your play rather than how rare they are.</p>
-      <ol class="picks">
-        ${TUX_PLAN.firstSix.map((p, i) => pick(p, String(i + 1))).join("")}
-        ${pick(TUX_PLAN.bonus, "+")}
-      </ol>
+      <div class="picks-cols">
+        <ol class="picks">
+          ${TUX_PLAN.firstSix.slice(0, 3).map((p, i) => pick(p, String(i + 1))).join("")}
+        </ol>
+        <ol class="picks">
+          ${TUX_PLAN.firstSix.slice(3).map((p, i) => pick(p, String(i + 4))).join("")}
+          ${pick(TUX_PLAN.bonus, "+")}
+        </ol>
+      </div>
     </div>
     <div class="plan-col">
       <h3>The game plan <a href="${TUX_PLAN.planVideo}" target="_blank" rel="noopener">▶ 14:14</a></h3>

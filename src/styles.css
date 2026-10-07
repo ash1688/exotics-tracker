@@ -738,3 +738,7 @@ footer code {
 .btn.ghost:hover {
   border-color: var(--accent-2);
 }
+
+.link.danger {
+  color: #fb7185;
+}

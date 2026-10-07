@@ -101,6 +101,7 @@ app.innerHTML = `
       <button id="expand-all" class="link">Expand all</button>
       <button id="export" class="link">Export</button>
       <button id="import" class="link">Import</button>
+      <button id="clear" class="link danger">Clear all</button>
       <input id="import-file" type="file" accept="application/json" hidden />
     </span>
   </div>
@@ -345,6 +346,15 @@ $("export").addEventListener("click", () => {
   const a = Object.assign(document.createElement("a"), { href: url, download: "exotics-owned.json" });
   a.click();
   URL.revokeObjectURL(url);
+});
+
+$("clear").addEventListener("click", () => {
+  if (!owned.size) return;
+  const where = store.account ? " This also clears them on your other synced devices." : "";
+  if (!confirm(`Untick all ${owned.size} exotics?${where} Use Export first if you want a backup.`)) return;
+  owned = new Set();
+  persist();
+  render();
 });
 
 const importFile = $<HTMLInputElement>("import-file");

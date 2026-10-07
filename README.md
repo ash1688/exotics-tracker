@@ -1,6 +1,6 @@
 # Exotics Tracker
 
-Tick off the Division 2 exotics you own. Data comes from Tuxedo Bandido's exotics spreadsheet (`src/exotics.json`).
+Tick off the Division 2 exotics you own. Data comes from [Tuxedo Bandido](https://www.youtube.com/@TuxedoBandido)'s Division 2 exotics spreadsheet (`src/exotics.json`). All credit for the data goes to him. Check out his channel for Division 2 guides.
 
 ```bash
 npm install

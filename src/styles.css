@@ -578,6 +578,10 @@ footer {
   font-size: 12px;
 }
 
+footer a {
+  color: var(--accent-2);
+}
+
 footer code {
   color: var(--accent-2);
 }

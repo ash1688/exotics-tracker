@@ -5,19 +5,24 @@ import path from "node:path";
 const DATA_DIR = path.resolve(__dirname, "data");
 const OWNED_FILE = path.join(DATA_DIR, "owned.json");
 
-async function readOwned(): Promise<number[]> {
+interface Owned {
+  owned: number[];
+  updated?: string;
+}
+
+async function readOwned(): Promise<Owned> {
   try {
     const parsed = JSON.parse(await readFile(OWNED_FILE, "utf-8"));
-    return Array.isArray(parsed.owned) ? parsed.owned : [];
+    return Array.isArray(parsed.owned) ? { owned: parsed.owned, updated: parsed.updated } : { owned: [] };
   } catch {
-    return [];
+    return { owned: [] };
   }
 }
 
-async function writeOwned(owned: number[]): Promise<void> {
+async function writeOwned(owned: number[], updated = new Date().toISOString()): Promise<void> {
   await mkdir(DATA_DIR, { recursive: true });
   const tmp = OWNED_FILE + ".tmp";
-  const body = JSON.stringify({ owned: [...new Set(owned)].sort((a, b) => a - b), updated: new Date().toISOString() }, null, 2);
+  const body = JSON.stringify({ owned: [...new Set(owned)].sort((a, b) => a - b), updated }, null, 2);
   await writeFile(tmp, body, "utf-8");
   await rename(tmp, OWNED_FILE);
 }
@@ -29,19 +34,19 @@ function ownedApi(): Plugin {
     try {
       if (req.method === "GET") {
         res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify({ owned: await readOwned() }));
+        res.end(JSON.stringify(await readOwned()));
         return;
       }
       if (req.method === "PUT") {
         let raw = "";
         for await (const chunk of req) raw += chunk;
-        const { owned } = JSON.parse(raw);
+        const { owned, updated } = JSON.parse(raw);
         if (!Array.isArray(owned) || !owned.every((n) => Number.isInteger(n))) {
           res.statusCode = 400;
           res.end("owned must be an array of integers");
           return;
         }
-        await writeOwned(owned);
+        await writeOwned(owned, typeof updated === "string" ? updated : undefined);
         res.statusCode = 204;
         res.end();
         return;

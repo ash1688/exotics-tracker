@@ -640,3 +640,101 @@ footer code {
   background: linear-gradient(135deg, var(--pink), var(--accent));
   box-shadow: 0 0 12px -2px var(--accent);
 }
+
+/* ---------- sync dialog ---------- */
+.sync-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 4px);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  color: var(--text);
+  box-shadow: 0 30px 80px -20px rgba(168, 85, 247, 0.55);
+  line-height: 1.5;
+}
+
+.sync-dialog::backdrop {
+  background: rgba(10, 5, 20, 0.7);
+  backdrop-filter: blur(3px);
+}
+
+.sync-dialog h3 {
+  margin: 0 0 8px;
+  font-family: Rajdhani, sans-serif;
+  font-size: 22px;
+}
+
+.sync-dialog p,
+.sync-dialog ol {
+  margin: 0 0 12px;
+  color: #cfc6ea;
+}
+
+.sync-dialog ol {
+  padding-left: 20px;
+}
+
+.sync-dialog a {
+  color: var(--accent-2);
+}
+
+#sync-token {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  outline: none;
+  font-family: ui-monospace, monospace;
+}
+
+#sync-token:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+}
+
+.sync-dialog .hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dialog-error {
+  margin-top: 8px !important;
+  color: var(--warn) !important;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn {
+  border: 0;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--accent), var(--violet));
+  box-shadow: 0 4px 14px -4px rgba(168, 85, 247, 0.8);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.btn.ghost {
+  background: none;
+  box-shadow: none;
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.btn.ghost:hover {
+  border-color: var(--accent-2);
+}

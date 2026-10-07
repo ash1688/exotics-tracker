@@ -2,7 +2,7 @@ import "./styles.css";
 import data from "./exotics.json";
 import images from "./images.json";
 import type { Exotic, ExoticsFile } from "./types";
-import { BROWSER_ONLY, loadOwned, saveOwned } from "./storage";
+import { BROWSER_ONLY, ProgressStore, type Status } from "./storage";
 
 const { meta, exotics } = data as ExoticsFile;
 const imageFor = (e: Exotic) => {
@@ -97,6 +97,7 @@ app.innerHTML = `
     <span id="count"></span>
     <span class="actions">
       <span id="save-state" class="save-state"></span>
+      <button id="sync" class="link">Sync</button>
       <button id="expand-all" class="link">Expand all</button>
       <button id="export" class="link">Export</button>
       <button id="import" class="link">Import</button>
@@ -105,6 +106,8 @@ app.innerHTML = `
   </div>
 
   <main id="list" class="grid"></main>
+  <dialog id="sync-dialog" class="sync-dialog"></dialog>
+
   <footer>Data from Tuxedo Bandido's Division 2 Exotics sheet · ${BROWSER_ONLY ? "Progress saved in this browser" : "Progress saved to <code>data/owned.json</code>"}</footer>
 `;
 
@@ -252,13 +255,19 @@ function render() {
   renderList();
 }
 
+function showStatus({ text, kind }: Status) {
+  saveStateEl.textContent = text;
+  saveStateEl.className = `save-state ${kind}`;
+}
+
+const store = new ProgressStore(() => {
+  owned = store.owned;
+  render();
+  if (syncDialog.open) renderSyncDialog();
+}, showStatus);
+
 function persist() {
-  saveStateEl.textContent = "Saving…";
-  saveStateEl.className = "save-state";
-  saveOwned(owned, (ok) => {
-    saveStateEl.textContent = ok ? "Saved" : "Saved in browser only (server unreachable)";
-    saveStateEl.className = `save-state ${ok ? "ok" : "warn"}`;
-  });
+  store.save(owned);
 }
 
 // --- events ---
@@ -357,13 +366,81 @@ importFile.addEventListener("change", async () => {
   }
 });
 
+// --- sync across devices (private GitHub gist) ---
+const syncDialog = $<HTMLDialogElement>("sync-dialog");
+const TOKEN_URL = "https://github.com/settings/tokens/new?scopes=gist&description=Exotics%20Tracker%20sync";
+
+function renderSyncDialog(error = "") {
+  const account = store.account;
+  syncDialog.innerHTML = account
+    ? `
+    <h3>Sync across devices</h3>
+    <p>Syncing as <b>@${esc(account.login)}</b> to a <a href="${account.gistUrl}" target="_blank" rel="noopener">private gist</a>.
+      Changes are pushed as you tick and pulled when you come back to the tab.</p>
+    <div class="dialog-actions">
+      <button class="btn ghost" data-sync="disconnect">Disconnect this device</button>
+      <button class="btn ghost" data-sync="now">Sync now</button>
+      <button class="btn" data-sync="close">Done</button>
+    </div>`
+    : `
+    <h3>Sync across devices</h3>
+    <p>Your progress is stored in a private gist on your GitHub account, so every device you connect sees the same ticks.</p>
+    <ol>
+      <li><a href="${TOKEN_URL}" target="_blank" rel="noopener">Create a GitHub token</a> with only the <b>gist</b> scope ticked.</li>
+      <li>Paste it below. Do this once on each device.</li>
+    </ol>
+    <form id="sync-form">
+      <input id="sync-token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false" required />
+      ${error ? `<p class="dialog-error">${esc(error)}</p>` : ""}
+      <p class="hint">The token is kept in this browser only and is only sent to GitHub.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-sync="close">Cancel</button>
+        <button type="submit" class="btn">Connect</button>
+      </div>
+    </form>`;
+}
+
+$("sync").addEventListener("click", () => {
+  renderSyncDialog();
+  syncDialog.showModal();
+});
+
+syncDialog.addEventListener("click", async (ev) => {
+  if (ev.target === syncDialog) return syncDialog.close(); // backdrop
+  const action = (ev.target as HTMLElement).closest<HTMLElement>("[data-sync]")?.dataset.sync;
+  if (action === "close") syncDialog.close();
+  if (action === "now") await store.pull();
+  if (action === "disconnect") {
+    store.disconnect();
+    renderSyncDialog();
+  }
+});
+
+syncDialog.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const input = syncDialog.querySelector<HTMLInputElement>("#sync-token")!;
+  const button = syncDialog.querySelector<HTMLButtonElement>("button[type=submit]")!;
+  button.disabled = true;
+  button.textContent = "Connecting…";
+  try {
+    await store.connect(input.value.trim());
+    renderSyncDialog();
+  } catch (err) {
+    renderSyncDialog((err as Error).message);
+  }
+});
+
+// Pick up changes made on other devices.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") void store.pull();
+});
+setInterval(() => {
+  if (document.visibilityState === "visible") void store.pull();
+}, 60_000);
+
 // --- boot ---
 render();
-loadOwned().then(({ owned: loaded, offline }) => {
-  owned = loaded;
-  if (offline) {
-    saveStateEl.textContent = "Server unreachable — using browser storage";
-    saveStateEl.className = "save-state warn";
-  }
+store.init().then(() => {
+  owned = store.owned;
   render();
 });

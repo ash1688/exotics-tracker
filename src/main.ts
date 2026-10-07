@@ -3,6 +3,7 @@ import data from "./exotics.json";
 import images from "./images.json";
 import type { Exotic, ExoticsFile } from "./types";
 import { BROWSER_ONLY, ProgressStore, type Status } from "./storage";
+import { TUX_PLAN, type PlanPick } from "./tuxPlan";
 
 const { meta, exotics } = data as ExoticsFile;
 const imageFor = (e: Exotic) => {
@@ -73,6 +74,15 @@ app.innerHTML = `
       <div class="stats" id="stats"></div>
     </div>
   </header>
+
+  <details class="plan" id="plan">
+    <summary>
+      <span class="plan-title"><span class="diamond"></span>Tux's exotic unlock order</span>
+      <span class="plan-progress" id="plan-progress"></span>
+      <svg class="plan-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+    </summary>
+    <div class="plan-body" id="plan-body"></div>
+  </details>
 
   <section class="toolbar">
     <input id="search" type="search" placeholder="Search name, talent, source…" autocomplete="off" />
@@ -295,8 +305,83 @@ function renderList() {
     : `<div class="empty">No exotics match these filters.${filters.ownership === "need" ? " Maybe you've got them all? 🎉" : ""}</div>`;
 }
 
+// --- Tux's unlock order ---
+const planEl = $<HTMLDetailsElement>("plan");
+const PLAN_KEY = "exotics-tracker:plan-open";
+const byNum = (num: number) => exotics.find((e) => e.num === num)!;
+
+function pick(p: PlanPick, label: string) {
+  const e = byNum(p.num);
+  const have = owned.has(e.num);
+  return `
+    <li class="pick ${have ? "have" : ""}" data-num="${e.num}">
+      <span class="pick-rank">${label}</span>
+      <span class="pick-art">${imageFor(e) ? `<img src="${imageFor(e)}" alt="" loading="lazy" />` : `<span class="diamond"></span>`}</span>
+      <span class="pick-text">
+        <b>${esc(e.name)}</b> <small>${esc(cleanType(e.type))}</small>
+        <span>${esc(p.why)}</span>
+      </span>
+      <span class="pick-state">${have ? "✓ Got it" : "Need"}</span>
+    </li>`;
+}
+
+function renderPlan() {
+  const got = TUX_PLAN.firstSix.filter((p) => owned.has(p.num)).length;
+  $("plan-progress").textContent = `${got}/${TUX_PLAN.firstSix.length} of his top picks`;
+  $("plan-body").innerHTML = `
+    <div class="plan-col">
+      <h3>Chase these first <a href="${TUX_PLAN.picksVideo}" target="_blank" rel="noopener">▶ 15:21</a></h3>
+      <p class="plan-note">His picks for a fresh agent, chosen for how much they change your play rather than how rare they are.</p>
+      <ol class="picks">
+        ${TUX_PLAN.firstSix.map((p, i) => pick(p, String(i + 1))).join("")}
+        ${pick(TUX_PLAN.bonus, "+")}
+      </ol>
+    </div>
+    <div class="plan-col">
+      <h3>The game plan <a href="${TUX_PLAN.planVideo}" target="_blank" rel="noopener">▶ 14:14</a></h3>
+      <ol class="steps">
+        ${TUX_PLAN.steps
+          .map(
+            (s) => `
+          <li>
+            <b>${esc(s.title)}</b>
+            <span>${esc(s.text)}</span>
+            ${
+              s.exotics
+                ? `<span class="step-exotics">${s.exotics
+                    .map((n) => `<button class="step-chip ${owned.has(n) ? "have" : ""}" data-num="${n}">${owned.has(n) ? "✓ " : ""}${esc(byNum(n).name)}</button>`)
+                    .join("")}</span>`
+                : ""
+            }
+          </li>`,
+          )
+          .join("")}
+      </ol>
+    </div>
+    <p class="plan-credit">Summarised from <a href="https://www.youtube.com/@TuxedoBandido" target="_blank" rel="noopener">Tuxedo Bandido</a>'s video
+      <a href="${TUX_PLAN.video}" target="_blank" rel="noopener">Every Exotic &amp; Where to Get It in 2026</a>. Watch it for the full breakdown.</p>`;
+}
+
+try {
+  planEl.open = localStorage.getItem(PLAN_KEY) !== "closed";
+} catch {
+  planEl.open = true;
+}
+planEl.addEventListener("toggle", () => {
+  try {
+    localStorage.setItem(PLAN_KEY, planEl.open ? "open" : "closed");
+  } catch {
+    /* storage unavailable */
+  }
+});
+$("plan-body").addEventListener("click", (ev) => {
+  const item = (ev.target as HTMLElement).closest<HTMLElement>("[data-num]");
+  if (item) openInfo(byNum(Number(item.dataset.num)));
+});
+
 function render() {
   renderStats();
+  renderPlan();
   renderSubtypes();
   renderList();
 }

@@ -5,6 +5,8 @@ Tick off the Division 2 exotics you own. Data comes from [Tuxedo Bandido](https:
 - View the spreadsheet: https://ggl.link/TuxExotics (to tick the Got column, use File → Make a copy to save it to your own Drive)
 - Download it (xlsx): https://ggl.link/TuxExoticsDownload
 
+The **Tux's exotic unlock order** panel summarises the game plan and top six picks from his video [Every Exotic & Where to Get It in 2026](https://www.youtube.com/watch?v=jP-AEM2w9vA). Edit `src/tuxPlan.ts` to change it.
+
 ```bash
 npm install
 npm start

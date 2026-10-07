@@ -79,6 +79,8 @@ app.innerHTML = `
     <summary>
       <span class="plan-title"><span class="diamond"></span>Tux's exotic unlock order</span>
       <span class="plan-progress" id="plan-progress"></span>
+      <span class="plan-teaser">Not sure where to start? See the 6 exotics to chase first and the weekly farming routine.</span>
+      <span class="plan-cta">Show me <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg></span>
       <svg class="plan-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
     </summary>
     <div class="plan-body" id="plan-body"></div>
@@ -362,10 +364,11 @@ function renderPlan() {
       <a href="${TUX_PLAN.video}" target="_blank" rel="noopener">Every Exotic &amp; Where to Get It in 2026</a>. Watch it for the full breakdown.</p>`;
 }
 
+// Closed by default; remembers if the user opened it.
 try {
-  planEl.open = localStorage.getItem(PLAN_KEY) !== "closed";
+  planEl.open = localStorage.getItem(PLAN_KEY) === "open";
 } catch {
-  planEl.open = true;
+  planEl.open = false;
 }
 planEl.addEventListener("toggle", () => {
   try {

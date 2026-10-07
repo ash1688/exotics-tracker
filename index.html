@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Exotics Tracker</title>
+    <script>
+      // Apply the saved theme before first paint.
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("exotics-tracker:theme") || "purple";
+      } catch {
+        document.documentElement.dataset.theme = "purple";
+      }
+    </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><polygon points='16,2 30,16 16,30 2,16' fill='%23a855f7'/><polygon points='16,9 23,16 16,23 9,16' fill='%23f0abfc'/></svg>" />
   </head>
   <body>

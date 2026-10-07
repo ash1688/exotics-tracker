@@ -39,7 +39,6 @@ const filters: Filters = {
   showUpcoming: true,
 };
 let owned = new Set<number>();
-const expanded = new Set<number>();
 
 const isLive = (e: Exotic) => e.status === "Live";
 const cleanType = (t: string) => t.replace(/\s*\[unconfirmed\]/i, "");
@@ -64,7 +63,14 @@ app.innerHTML = `
       <h1><span class="diamond"></span>${esc(meta.title)}</h1>
       <p class="sub">${esc(meta.subtitle.split("·").slice(0, 2).join("·"))}</p>
     </div>
-    <div class="stats" id="stats"></div>
+    <div class="hero-side">
+      <div class="seg theme-seg" id="theme" role="group" aria-label="Theme">
+        <button data-v="purple">Purple</button>
+        <button data-v="dark">Dark</button>
+        <button data-v="light">Light</button>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
   </header>
 
   <section class="toolbar">
@@ -98,7 +104,6 @@ app.innerHTML = `
     <span class="actions">
       <span id="save-state" class="save-state"></span>
       <button id="sync" class="link">Sync</button>
-      <button id="expand-all" class="link">Expand all</button>
       <button id="export" class="link">Export</button>
       <button id="import" class="link">Import</button>
       <button id="clear" class="link danger">Clear all</button>
@@ -107,7 +112,8 @@ app.innerHTML = `
   </div>
 
   <main id="list" class="grid"></main>
-  <dialog id="sync-dialog" class="sync-dialog"></dialog>
+  <dialog id="sync-dialog" class="modal sync-dialog"></dialog>
+  <dialog id="info-dialog" class="modal info-dialog" aria-labelledby="info-title"></dialog>
 
   <footer>Data from Tuxedo Bandido's Division 2 Exotics sheet · ${BROWSER_ONLY ? "Progress saved in this browser" : "Progress saved to <code>data/owned.json</code>"}</footer>
 `;
@@ -187,60 +193,85 @@ function sorted(list: Exotic[]): Exotic[] {
   return [...list].sort((a, b) => (a[by] ?? "~").localeCompare(b[by] ?? "~") || a.num - b.num);
 }
 
-function detail(label: string, value: string | null) {
-  return value ? `<div class="d"><dt>${label}</dt><dd>${esc(value)}</dd></div>` : "";
+function detail(label: string, value: string | null, cls = "") {
+  return value ? `<div class="d ${cls}"><dt>${label}</dt><dd>${esc(value)}</dd></div>` : "";
+}
+
+function art(e: Exotic, eager = false) {
+  return imageFor(e)
+    ? `<img src="${imageFor(e)}" alt="${esc(e.name)}" ${eager ? "" : `loading="lazy"`} />`
+    : `<div class="no-art"><span class="diamond"></span><small>${esc(cleanType(e.type))}</small></div>`;
+}
+
+function tags(e: Exotic) {
+  const roleCls = ROLE_CLASS[e.role ?? ""] ?? "none";
+  return `
+    <span class="tag cat-${e.category.toLowerCase()}">${esc(cleanType(e.type))}</span>
+    ${e.role ? `<span class="tag role-${roleCls}">${esc(e.role)}</span>` : ""}
+    ${isLive(e) ? "" : `<span class="tag soon">Announced</span>`}
+    ${e.locked && e.locked !== "No" ? `<span class="tag lock">🔒 ${esc(e.locked)}</span>` : ""}`;
 }
 
 function card(e: Exotic) {
   const have = owned.has(e.num);
-  const open = expanded.has(e.num);
-  const roleCls = ROLE_CLASS[e.role ?? ""] ?? "none";
   return `
-  <article class="card ${have ? "have" : ""} ${open ? "open" : ""} ${isLive(e) ? "" : "upcoming"}" data-num="${e.num}">
-    <div class="art" data-action="expand">
-      ${
-        imageFor(e)
-          ? `<img src="${imageFor(e)}" alt="${esc(e.name)}" loading="lazy" />`
-          : `<div class="no-art"><span class="diamond"></span><small>${esc(cleanType(e.type))}</small></div>`
-      }
+  <article class="card ${have ? "have" : ""} ${isLive(e) ? "" : "upcoming"}" data-num="${e.num}" data-action="info">
+    <div class="art">
+      ${art(e)}
       ${have ? `<span class="owned-badge">Owned</span>` : ""}
     </div>
     <div class="card-top">
       <button class="check" data-action="toggle" aria-pressed="${have}" aria-label="${have ? "Unmark" : "Mark"} ${esc(e.name)} as owned">
         <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
       </button>
-      <div class="title" data-action="expand">
+      <div class="title">
         <div class="name-row">
           <span class="num">#${e.num}</span>
           <h2>${esc(e.name)}</h2>
         </div>
-        <div class="tags">
-          <span class="tag cat-${e.category.toLowerCase()}">${esc(cleanType(e.type))}</span>
-          ${e.role ? `<span class="tag role-${roleCls}">${esc(e.role)}</span>` : ""}
-          ${isLive(e) ? "" : `<span class="tag soon">Announced</span>`}
-          ${e.locked && e.locked !== "No" ? `<span class="tag lock">🔒 ${esc(e.locked)}</span>` : ""}
-        </div>
+        <div class="tags">${tags(e)}</div>
         <p class="talent"><b>${esc(e.talents)}</b> — ${esc(e.summary)}</p>
       </div>
-      <button class="chev" data-action="expand" aria-label="Toggle details">
-        <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+      <button class="info-btn" data-action="info" aria-label="How to get ${esc(e.name)}">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 7.5v.5" /></svg>
       </button>
     </div>
-    ${
-      open
-        ? `<dl class="details">
-        ${detail("How to obtain", e.obtain)}
+  </article>`;
+}
+
+// --- info modal ---
+const infoDialog = $<HTMLDialogElement>("info-dialog");
+
+function openInfo(e: Exotic) {
+  const have = owned.has(e.num);
+  infoDialog.innerHTML = `
+    <button class="modal-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
+    <div class="art">${art(e, true)}${have ? `<span class="owned-badge">Owned</span>` : ""}</div>
+    <div class="info-body">
+      <div class="name-row">
+        <span class="num">#${e.num}</span>
+        <h2 id="info-title">${esc(e.name)}</h2>
+      </div>
+      <div class="tags">${tags(e)}</div>
+      <p class="talent"><b>${esc(e.talents)}</b> — ${esc(e.summary)}</p>
+      <dl class="details">
+        ${detail("How to obtain", e.obtain, "obtain")}
         ${detail("Targeted loot", e.targeted)}
         ${detail("Craftable / Blueprint", e.blueprint)}
         ${detail("Locked behind", e.locked)}
         ${detail("Added in", e.added)}
         ${detail("Notes", e.notes)}
         ${detail("Status", e.status)}
-      </dl>`
-        : ""
-    }
-  </article>`;
+      </dl>
+    </div>`;
+  infoDialog.showModal();
 }
+
+// Any click closes it (backdrop, the cross or the modal itself), unless the user was selecting text.
+infoDialog.addEventListener("click", () => {
+  if (window.getSelection()?.toString()) return;
+  infoDialog.close();
+});
 
 function renderList() {
   const list = sorted(exotics.filter(matches));
@@ -281,11 +312,10 @@ listEl.addEventListener("click", (ev) => {
     if (owned.has(num)) owned.delete(num);
     else owned.add(num);
     persist();
+    render();
   } else {
-    if (expanded.has(num)) expanded.delete(num);
-    else expanded.add(num);
+    openInfo(exotics.find((e) => e.num === num)!);
   }
-  render();
 });
 
 $<HTMLInputElement>("search").addEventListener("input", (ev) => {
@@ -328,12 +358,26 @@ $<HTMLInputElement>("upcoming").addEventListener("change", (ev) => {
   render();
 });
 
-const expandBtn = $("expand-all");
-expandBtn.addEventListener("click", () => {
-  if (expanded.size) expanded.clear();
-  else exotics.forEach((e) => expanded.add(e.num));
-  expandBtn.textContent = expanded.size ? "Collapse all" : "Expand all";
-  renderList();
+// --- theme ---
+type Theme = "purple" | "dark" | "light";
+const THEME_KEY = "exotics-tracker:theme";
+const themeEl = $("theme");
+
+function applyTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme;
+  themeEl.querySelectorAll<HTMLElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.v === theme));
+}
+
+applyTheme((document.documentElement.dataset.theme as Theme) || "purple");
+themeEl.addEventListener("click", (ev) => {
+  const btn = (ev.target as HTMLElement).closest<HTMLElement>("button");
+  if (!btn) return;
+  applyTheme(btn.dataset.v as Theme);
+  try {
+    localStorage.setItem(THEME_KEY, btn.dataset.v!);
+  } catch {
+    /* storage unavailable */
+  }
 });
 
 $("export").addEventListener("click", () => {

@@ -249,7 +249,7 @@ h1 {
 }
 
 .plan-teaser {
-  flex: 1;
+  flex: 1 1 260px; /* drops onto its own line when there isn't room beside the title */
   min-width: 0;
   color: var(--text-soft);
   font-size: 13px;
@@ -1306,5 +1306,13 @@ footer code {
 @media (max-width: 720px) {
   .hero-side {
     align-items: flex-start;
+  }
+}
+
+/* On small screens the filters are too tall to pin, so let them scroll away with the page. */
+@media (max-width: 720px), (max-height: 600px) {
+  .toolbar {
+    position: static;
+    backdrop-filter: none;
   }
 }

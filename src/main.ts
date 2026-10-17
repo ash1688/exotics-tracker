@@ -64,6 +64,9 @@ app.innerHTML = `
     <div class="hero-text">
       <h1><span class="diamond"></span>${esc(meta.title)}</h1>
       <p class="sub">${esc(meta.subtitle.split("·").slice(0, 2).join("·"))}</p>
+      <a class="walkthrough" href="https://www.youtube.com/watch?v=o3LJ856wUKk" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" /></svg> Watch the walkthrough
+      </a>
     </div>
     <div class="hero-side">
       <div class="seg theme-seg" id="theme" role="group" aria-label="Theme">

@@ -155,6 +155,37 @@ h1 {
   font-size: 13px;
 }
 
+.walkthrough {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 14px 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.walkthrough:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.walkthrough svg {
+  width: 16px;
+  height: 16px;
+  fill: #ff4d4d;
+}
+
+.walkthrough:hover svg {
+  fill: #fff;
+}
+
 .stats {
   display: flex;
   flex-wrap: wrap;

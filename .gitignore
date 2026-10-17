@@ -3,3 +3,5 @@ dist
 data/owned.json
 .claude
 *.tmp
+docs
+youtubes
